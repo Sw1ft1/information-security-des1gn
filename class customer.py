@@ -2,15 +2,11 @@ import json
 
 class Customer:
     def __init__(self, customer_id=None, first_name=None, address=None, phone_number=None):
-        # Основной конструктор проверяет наличие аргументов
-        if customer_id is not None:
-            self.customer_id = customer_id
-        if first_name is not None:
-            self.first_name = first_name
-        if address is not None:
-            self.address = address
-        if phone_number is not None:
-            self.phone_number = phone_number
+        # Основной конструктор с валидацией
+        self.customer_id = customer_id
+        self.first_name = first_name
+        self.address = address
+        self.phone_number = phone_number
 
     # Статические методы для валидации полей
 
@@ -106,7 +102,25 @@ class Customer:
         except (KeyError, json.JSONDecodeError) as e:
             raise ValueError(f"Error parsing JSON: {e}")
 
-    # Метод для вывода информации о клиенте
+    # Полная версия объекта (информативная)
+    def __repr__(self):
+        return (f"Customer(customer_id={self.customer_id}, first_name='{self.first_name}', "
+                f"address='{self.address}', phone_number='{self.phone_number}')")
+
+    # Краткая версия объекта (для простого вывода)
+    def __str__(self):
+        return f"Customer: {self.first_name} (ID: {self.customer_id})"
+
+    # Метод для сравнения объектов на равенство
+    def __eq__(self, other):
+        if isinstance(other, Customer):
+            return (self.customer_id == other.customer_id and
+                    self.first_name == other.first_name and
+                    self.address == other.address and
+                    self.phone_number == other.phone_number)
+        return False
+
+    # Метод для вывода полной информации о клиенте
     def display_info(self):
         print(f"Customer ID: {self.customer_id}")
         print(f"Name: {self.first_name}")
