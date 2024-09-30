@@ -1,10 +1,10 @@
 class Customer:
     def __init__(self, customer_id, first_name, address, phone_number):
-        # Валидация всех полей через статические методы
-        self.__customer_id = self.validate_customer_id(customer_id)
-        self.__first_name = self.validate_first_name(first_name)
-        self.__address = self.validate_address(address)
-        self.__phone_number = self.validate_phone_number(phone_number)
+        # Используем свойства для инициализации полей с валидацией
+        self.customer_id = customer_id
+        self.first_name = first_name
+        self.address = address
+        self.phone_number = phone_number
 
     # Статические методы для валидации полей
 
@@ -36,22 +36,45 @@ class Customer:
         else:
             raise ValueError("Phone number must contain only digits and be at least 10 characters long.")
 
-    # Геттеры для всех полей
-    def get_customer_id(self):
+    # Свойства для customer_id
+    @property
+    def customer_id(self):
         return self.__customer_id
 
-    def get_first_name(self):
+    @customer_id.setter
+    def customer_id(self, value):
+        self.__customer_id = self.validate_customer_id(value)
+
+    # Свойства для first_name
+    @property
+    def first_name(self):
         return self.__first_name
 
-    def get_address(self):
+    @first_name.setter
+    def first_name(self, value):
+        self.__first_name = self.validate_first_name(value)
+
+    # Свойства для address
+    @property
+    def address(self):
         return self.__address
 
-    def get_phone_number(self):
+    @address.setter
+    def address(self, value):
+        self.__address = self.validate_address(value)
+
+    # Свойства для phone_number
+    @property
+    def phone_number(self):
         return self.__phone_number
+
+    @phone_number.setter
+    def phone_number(self, value):
+        self.__phone_number = self.validate_phone_number(value)
 
     # Метод для вывода информации о клиенте
     def display_info(self):
-        print(f"Customer ID: {self.__customer_id}")
-        print(f"Name: {self.__first_name}")
-        print(f"Address: {self.__address}")
-        print(f"Phone: {self.__phone_number}")
+        print(f"Customer ID: {self.customer_id}")
+        print(f"Name: {self.first_name}")
+        print(f"Address: {self.address}")
+        print(f"Phone: {self.phone_number}")
