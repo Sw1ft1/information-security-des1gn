@@ -1,10 +1,16 @@
+import json
+
 class Customer:
-    def __init__(self, customer_id, first_name, address, phone_number):
-        # Используем свойства для инициализации полей с валидацией
-        self.customer_id = customer_id
-        self.first_name = first_name
-        self.address = address
-        self.phone_number = phone_number
+    def __init__(self, customer_id=None, first_name=None, address=None, phone_number=None):
+        # Основной конструктор проверяет наличие аргументов
+        if customer_id is not None:
+            self.customer_id = customer_id
+        if first_name is not None:
+            self.first_name = first_name
+        if address is not None:
+            self.address = address
+        if phone_number is not None:
+            self.phone_number = phone_number
 
     # Статические методы для валидации полей
 
@@ -71,6 +77,34 @@ class Customer:
     @phone_number.setter
     def phone_number(self, value):
         self.__phone_number = self.validate_phone_number(value)
+
+    # Альтернативный конструктор из строки
+    @classmethod
+    def from_string(cls, customer_str):
+        try:
+            customer_id, first_name, address, phone_number = customer_str.split(',')
+            return cls(
+                customer_id=int(customer_id.strip()),
+                first_name=first_name.strip(),
+                address=address.strip(),
+                phone_number=phone_number.strip()
+            )
+        except ValueError as e:
+            raise ValueError(f"Error parsing string: {e}")
+
+    # Альтернативный конструктор из JSON
+    @classmethod
+    def from_json(cls, json_str):
+        try:
+            data = json.loads(json_str)
+            return cls(
+                customer_id=data['customer_id'],
+                first_name=data['first_name'],
+                address=data['address'],
+                phone_number=data['phone_number']
+            )
+        except (KeyError, json.JSONDecodeError) as e:
+            raise ValueError(f"Error parsing JSON: {e}")
 
     # Метод для вывода информации о клиенте
     def display_info(self):
