@@ -60,6 +60,17 @@ class ObservableRepository(Observable):
     def get_all_suppliers(self):
         return self.suppliers
 
+    def sort_suppliers(self, key: str, reverse: bool = False):
+        if key == "ID":
+            self.suppliers.sort(key=lambda s: s.supplier_id, reverse=reverse)
+        elif key == "Name":
+            self.suppliers.sort(key=lambda s: s.name.lower(), reverse=reverse)
+        elif key == "Address":
+            self.suppliers.sort(key=lambda s: s.address.lower(), reverse=reverse)
+        elif key == "Phone":
+            self.suppliers.sort(key=lambda s: s.phone, reverse=reverse)
+        self.notify_observers(self.suppliers)
+
 
 # --- Контроллер главного окна ---
 class MainController:
@@ -71,6 +82,9 @@ class MainController:
 
     def delete_supplier(self, supplier_id: int):
         self.repository.delete_supplier(supplier_id)
+
+    def sort_suppliers(self, key: str, reverse: bool = False):
+        self.repository.sort_suppliers(key, reverse)
 
 
 # --- Контроллер окна добавления ---
@@ -97,7 +111,7 @@ class MainWindow(tk.Tk, Observer):
         # Таблица
         self.tree = ttk.Treeview(self, columns=("ID", "Name", "Address", "Phone"), show="headings")
         for col in self.tree["columns"]:
-            self.tree.heading(col, text=col)
+            self.tree.heading(col, text=col, command=lambda c=col: self.sort_table(c))
         self.tree.pack(fill=tk.BOTH, expand=True)
 
         # Панель управления
@@ -109,6 +123,9 @@ class MainWindow(tk.Tk, Observer):
 
         # Подписываемся как наблюдатель
         self.controller.repository.add_observer(self)
+
+        # Параметры сортировки
+        self.sort_reverse = False
 
     def open_add_supplier_window(self):
         # Передаем только контроллер AddSupplierController
@@ -122,6 +139,10 @@ class MainWindow(tk.Tk, Observer):
 
         supplier_id = int(self.tree.item(selected_item)["values"][0])
         self.controller.delete_supplier(supplier_id)
+
+    def sort_table(self, column: str):
+        self.sort_reverse = not self.sort_reverse  # Переключение порядка сортировки
+        self.controller.sort_suppliers(key=column, reverse=self.sort_reverse)
 
     def update(self, data):
         # Обновление таблицы
