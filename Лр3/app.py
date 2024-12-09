@@ -69,6 +69,9 @@ class MainController:
     def get_all_suppliers(self):
         return self.repository.get_all_suppliers()
 
+    def delete_supplier(self, supplier_id: int):
+        self.repository.delete_supplier(supplier_id)
+
 
 # --- Контроллер окна добавления ---
 class AddSupplierController:
@@ -102,6 +105,7 @@ class MainWindow(tk.Tk, Observer):
         self.control_frame.pack(fill=tk.X, padx=10, pady=5)
 
         ttk.Button(self.control_frame, text="Add Supplier", command=self.open_add_supplier_window).pack(side=tk.LEFT, padx=5)
+        ttk.Button(self.control_frame, text="Delete Selected", command=self.delete_selected_supplier).pack(side=tk.LEFT, padx=5)
 
         # Подписываемся как наблюдатель
         self.controller.repository.add_observer(self)
@@ -109,6 +113,15 @@ class MainWindow(tk.Tk, Observer):
     def open_add_supplier_window(self):
         # Передаем только контроллер AddSupplierController
         AddSupplierWindow(AddSupplierController(self.controller.repository))
+
+    def delete_selected_supplier(self):
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showerror("Error", "No supplier selected!")
+            return
+
+        supplier_id = int(self.tree.item(selected_item)["values"][0])
+        self.controller.delete_supplier(supplier_id)
 
     def update(self, data):
         # Обновление таблицы
