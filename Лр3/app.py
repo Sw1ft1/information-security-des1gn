@@ -61,26 +61,29 @@ class ObservableRepository(Observable):
         return self.suppliers
 
 
-# --- Контроллер ---
-class Controller:
+# --- Контроллер главного окна ---
+class MainController:
     def __init__(self, repository: ObservableRepository):
         self.repository = repository
-
-    def add_supplier(self, name, address, phone):
-        supplier_id = len(self.repository.suppliers) + 1  # Простая генерация ID
-        supplier = Supplier(supplier_id, name, address, phone)
-        self.repository.add_supplier(supplier)
-
-    def delete_supplier(self, supplier_id):
-        self.repository.delete_supplier(supplier_id)
 
     def get_all_suppliers(self):
         return self.repository.get_all_suppliers()
 
 
+# --- Контроллер окна добавления ---
+class AddSupplierController:
+    def __init__(self, repository: ObservableRepository):
+        self.repository = repository
+
+    def add_supplier(self, name: str, address: str, phone: str):
+        supplier_id = len(self.repository.suppliers) + 1  # Генерация ID
+        supplier = Supplier(supplier_id, name, address, phone)
+        self.repository.add_supplier(supplier)
+
+
 # --- Главное окно ---
 class MainWindow(tk.Tk, Observer):
-    def __init__(self, controller: Controller):
+    def __init__(self, controller: MainController):
         super().__init__()
         self.title("Supplier Management")
         self.geometry("700x400")
@@ -99,22 +102,13 @@ class MainWindow(tk.Tk, Observer):
         self.control_frame.pack(fill=tk.X, padx=10, pady=5)
 
         ttk.Button(self.control_frame, text="Add Supplier", command=self.open_add_supplier_window).pack(side=tk.LEFT, padx=5)
-        ttk.Button(self.control_frame, text="Delete Selected", command=self.delete_selected_supplier).pack(side=tk.LEFT, padx=5)
 
         # Подписываемся как наблюдатель
         self.controller.repository.add_observer(self)
 
     def open_add_supplier_window(self):
-        AddSupplierWindow(self, self.controller)
-
-    def delete_selected_supplier(self):
-        selected_item = self.tree.selection()
-        if not selected_item:
-            messagebox.showerror("Error", "No supplier selected!")
-            return
-
-        supplier_id = int(self.tree.item(selected_item)["values"][0])
-        self.controller.delete_supplier(supplier_id)
+        # Передаем только контроллер AddSupplierController
+        AddSupplierWindow(AddSupplierController(self.controller.repository))
 
     def update(self, data):
         # Обновление таблицы
@@ -130,8 +124,8 @@ class MainWindow(tk.Tk, Observer):
 
 # --- Окно добавления поставщика ---
 class AddSupplierWindow(tk.Toplevel):
-    def __init__(self, parent, controller: Controller):
-        super().__init__(parent)
+    def __init__(self, controller: AddSupplierController):
+        super().__init__()
         self.title("Add Supplier")
         self.geometry("400x200")
         self.controller = controller
@@ -157,8 +151,13 @@ class AddSupplierWindow(tk.Toplevel):
         address = self.address_var.get()
         phone = self.phone_var.get()
 
+        # Валидация данных
         if not name or not address or not phone:
             messagebox.showerror("Error", "All fields are required!")
+            return
+
+        if not phone.isdigit():
+            messagebox.showerror("Error", "Phone must be numeric!")
             return
 
         self.controller.add_supplier(name, address, phone)
@@ -168,6 +167,6 @@ class AddSupplierWindow(tk.Toplevel):
 # --- Запуск приложения ---
 if __name__ == "__main__":
     repository = ObservableRepository()
-    controller = Controller(repository)
-    app = MainWindow(controller)
+    main_controller = MainController(repository)
+    app = MainWindow(main_controller)
     app.mainloop()
