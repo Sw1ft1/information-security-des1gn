@@ -87,7 +87,7 @@ class SupplierRepositoryYAML:
         self.write_to_file()
 
 
-if name == "__main__":
+if __name__ == "__main__":
     json_repo = SupplierRepositoryJSON("suppliers.json")
     yaml_repo = SupplierRepositoryYAML("suppliers.yaml")
 
