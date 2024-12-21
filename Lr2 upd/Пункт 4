@@ -61,7 +61,7 @@ class SupplierRepository:
     def close(self):
         self.connection.close()
 
-if name == "__main__":
+if __name__ == "__main__":
     db = SupplierRepository("suppliers.db")
     supplier = Supplier(0, "Автозапчасти Ltd", "Москва, ул. Ленина, 1", "123456789")
     db.add_supplier(supplier)
