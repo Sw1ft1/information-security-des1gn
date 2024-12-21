@@ -108,7 +108,7 @@ class PartsDatabase:
     def close(self):
         self.connection.close()
 
-if name == "__main__":
+if __name__ == "__main__":
     db = PartsDatabase("parts_db.db")
 
     supplier1 = Supplier(0, "Supplier 1", "123 Main St", "1234567890")
