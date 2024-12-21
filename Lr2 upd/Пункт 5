@@ -1,90 +1,131 @@
 import sqlite3
 from typing import List, Optional
 
-class MyEntity:
-    def __init__(self, customer_id: int, first_name: str, last_name: str, phone_number: str, inn: str, ogrn: str, address: Optional[str] = None):
-        self.customer_id = customer_id
-        self.first_name = first_name
-        self.last_name = last_name
-        self.phone_number = phone_number
-        self.inn = inn
-        self.ogrn = ogrn
-        self.address = address
+class Part:
+    def __init__(self, part_id: int, name: str, article: str, price: float, supplier_id: int):
+        self.part_id = part_id
+        self.name = name
+        self.article = article
+        self.price = price
+        self.supplier_id = supplier_id
 
     def to_dict(self):
         return {
-            "customer_id": self.customer_id,
-            "first_name": self.first_name,
-            "last_name": self.last_name,
-            "phone_number": self.phone_number,
-            "inn": self.inn,
-            "ogrn": self.ogrn,
-            "address": self.address
+            "part_id": self.part_id,
+            "name": self.name,
+            "article": self.article,
+            "price": self.price,
+            "supplier_id": self.supplier_id
         }
 
-class MyEntityDB:
+class Supplier:
+    def __init__(self, supplier_id: int, name: str, address: str, phone: str):
+        self.supplier_id = supplier_id
+        self.name = name
+        self.address = address
+        self.phone = phone
+
+    def to_dict(self):
+        return {
+            "supplier_id": self.supplier_id,
+            "name": self.name,
+            "address": self.address,
+            "phone": self.phone
+        }
+
+class PartsDatabase:
     def __init__(self, db_file: str):
         self.connection = sqlite3.connect(db_file)
-        self.create_table()
+        self.create_tables()
 
-    def create_table(self):
+    def create_tables(self):
         with self.connection:
             self.connection.execute('''
-                CREATE TABLE IF NOT EXISTS MyEntities (
-                    customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    first_name TEXT,
-                    last_name TEXT,
-                    phone_number TEXT,
-                    inn TEXT,
-                    ogrn TEXT,
-                    address TEXT
+                CREATE TABLE IF NOT EXISTS Suppliers (
+                    supplier_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT,
+                    address TEXT,
+                    phone TEXT
+                )
+            ''')
+            self.connection.execute('''
+                CREATE TABLE IF NOT EXISTS Parts (
+                    part_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT,
+                    article TEXT,
+                    price REAL,
+                    supplier_id INTEGER,
+                    FOREIGN KEY(supplier_id) REFERENCES Suppliers(supplier_id)
                 )
             ''')
 
-    def add(self, entity: MyEntity):
+    def add_supplier(self, supplier: Supplier):
         with self.connection:
             cursor = self.connection.cursor()
             cursor.execute('''
-                INSERT INTO MyEntities (first_name, last_name, phone_number, inn, ogrn, address)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (entity.first_name, entity.last_name, entity.phone_number, entity.inn, entity.ogrn, entity.address))
-            entity.customer_id = cursor.lastrowid
+                INSERT INTO Suppliers (name, address, phone)
+                VALUES (?, ?, ?)
+            ''', (supplier.name, supplier.address, supplier.phone))
+            supplier.supplier_id = cursor.lastrowid
 
-    def get_all(self) -> List[MyEntity]:
-        cursor = self.connection.cursor()
-        cursor.execute("SELECT * FROM MyEntities")
-        rows = cursor.fetchall()
-        return [MyEntity(*row) for row in rows]
-
-    def get_by_id(self, customer_id: int) -> Optional[MyEntity]:
-        cursor = self.connection.cursor()
-        cursor.execute("SELECT * FROM MyEntities WHERE customer_id = ?", (customer_id,))
-        row = cursor.fetchone()
-        return MyEntity(*row) if row else None
-
-    def delete(self, customer_id: int):
+    def add_part(self, part: Part):
         with self.connection:
-            self.connection.execute("DELETE FROM MyEntities WHERE customer_id = ?", (customer_id,))
+            cursor = self.connection.cursor()
+            cursor.execute('''
+                INSERT INTO Parts (name, article, price, supplier_id)
+                VALUES (?, ?, ?, ?)
+            ''', (part.name, part.article, part.price, part.supplier_id))
+            part.part_id = cursor.lastrowid
+
+    def get_all_parts(self) -> List[Part]:
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM Parts")
+        rows = cursor.fetchall()
+        return [Part(*row) for row in rows]
+
+    def get_all_suppliers(self) -> List[Supplier]:
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM Suppliers")
+        rows = cursor.fetchall()
+        return [Supplier(*row) for row in rows]
+
+    def get_part_by_id(self, part_id: int) -> Optional[Part]:
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM Parts WHERE part_id = ?", (part_id,))
+        row = cursor.fetchone()
+        if row:
+            return Part(*row)
+        return None
+
+    def delete_part(self, part_id: int):
+        with self.connection:
+            self.connection.execute("DELETE FROM Parts WHERE part_id = ?", (part_id,))
+
+    def delete_supplier(self, supplier_id: int):
+        with self.connection:
+            self.connection.execute("DELETE FROM Suppliers WHERE supplier_id = ?", (supplier_id,))
 
     def close(self):
         self.connection.close()
 
 if name == "__main__":
-    db = MyEntityDB("my_entities.db")
+    db = PartsDatabase("parts_db.db")
 
-    new_entity = MyEntity(0, "John", "Doe", "123456789", "123456789012", "1234567890123", "Some Address")
-    db.add(new_entity)
+    supplier1 = Supplier(0, "Supplier 1", "123 Main St", "1234567890")
+    db.add_supplier(supplier1)
 
-    all_entities = db.get_all()
-    for entity in all_entities:
-        print(entity.to_dict())
+    part1 = Part(0, "Brake Pad", "A123", 250.0, supplier1.supplier_id)
+    db.add_part(part1)
 
-    entity = db.get_by_id(1)
-    if entity:
-        print(entity.to_dict())
-    else:
-        print("Entity not found")
+    parts = db.get_all_parts()
+    for part in parts:
+        print(part.to_dict())
 
-    db.delete(1)
+    suppliers = db.get_all_suppliers()
+for supplier in suppliers:
+        print(supplier.to_dict())
+
+    db.delete_part(part1.part_id)
+    db.delete_supplier(supplier1.supplier_id)
 
     db.close()
