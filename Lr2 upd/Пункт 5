@@ -1,0 +1,90 @@
+import sqlite3
+from typing import List, Optional
+
+class MyEntity:
+    def __init__(self, customer_id: int, first_name: str, last_name: str, phone_number: str, inn: str, ogrn: str, address: Optional[str] = None):
+        self.customer_id = customer_id
+        self.first_name = first_name
+        self.last_name = last_name
+        self.phone_number = phone_number
+        self.inn = inn
+        self.ogrn = ogrn
+        self.address = address
+
+    def to_dict(self):
+        return {
+            "customer_id": self.customer_id,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "phone_number": self.phone_number,
+            "inn": self.inn,
+            "ogrn": self.ogrn,
+            "address": self.address
+        }
+
+class MyEntityDB:
+    def __init__(self, db_file: str):
+        self.connection = sqlite3.connect(db_file)
+        self.create_table()
+
+    def create_table(self):
+        with self.connection:
+            self.connection.execute('''
+                CREATE TABLE IF NOT EXISTS MyEntities (
+                    customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    first_name TEXT,
+                    last_name TEXT,
+                    phone_number TEXT,
+                    inn TEXT,
+                    ogrn TEXT,
+                    address TEXT
+                )
+            ''')
+
+    def add(self, entity: MyEntity):
+        with self.connection:
+            cursor = self.connection.cursor()
+            cursor.execute('''
+                INSERT INTO MyEntities (first_name, last_name, phone_number, inn, ogrn, address)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (entity.first_name, entity.last_name, entity.phone_number, entity.inn, entity.ogrn, entity.address))
+            entity.customer_id = cursor.lastrowid
+
+    def get_all(self) -> List[MyEntity]:
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM MyEntities")
+        rows = cursor.fetchall()
+        return [MyEntity(*row) for row in rows]
+
+    def get_by_id(self, customer_id: int) -> Optional[MyEntity]:
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM MyEntities WHERE customer_id = ?", (customer_id,))
+        row = cursor.fetchone()
+        return MyEntity(*row) if row else None
+
+    def delete(self, customer_id: int):
+        with self.connection:
+            self.connection.execute("DELETE FROM MyEntities WHERE customer_id = ?", (customer_id,))
+
+    def close(self):
+        self.connection.close()
+
+if name == "__main__":
+    db = MyEntityDB("my_entities.db")
+
+    new_entity = MyEntity(0, "John", "Doe", "123456789", "123456789012", "1234567890123", "Some Address")
+    db.add(new_entity)
+
+    all_entities = db.get_all()
+    for entity in all_entities:
+        print(entity.to_dict())
+
+    entity = db.get_by_id(1)
+    if entity:
+        print(entity.to_dict())
+    else:
+        print("Entity not found")
+
+    db.delete(1)
+
+    db.close()
