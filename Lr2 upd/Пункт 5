@@ -122,7 +122,7 @@ if name == "__main__":
         print(part.to_dict())
 
     suppliers = db.get_all_suppliers()
-for supplier in suppliers:
+    for supplier in suppliers:
         print(supplier.to_dict())
 
     db.delete_part(part1.part_id)
