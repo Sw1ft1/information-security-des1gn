@@ -98,7 +98,7 @@ class Database:
     def close(self):
         self.connection.close()
 
-if name == "__main__":
+if __name__ == "__main__":
     db = Database("parts_simple.db")
 
     supplier = Supplier("Автозапчасти Ltd", "Москва, ул. Ленина, 1", "123456789")
